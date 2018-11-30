@@ -43,6 +43,16 @@ export interface RenderedRows {
   stopIndex: number;
 }
 
+function defaultRenderWrapper(outerProps: any, ref: (node: HTMLElement) => void, innerStyle: React.CSSProperties , items: React.ReactNode[]) {
+  return (
+    <div ref={ref} {...outerProps}>
+      <div style={innerStyle}>
+        {items}
+      </div>
+    </div>
+  );
+}
+
 export interface Props {
   className?: string;
   estimatedItemSize?: number;
@@ -60,6 +70,7 @@ export interface Props {
   onItemsRendered?({startIndex, stopIndex}: RenderedRows): void;
   onScroll?(offset: number, event: UIEvent): void;
   renderItem(itemInfo: ItemInfo): React.ReactNode;
+  renderWrapper?(outerProps: any, ref: any, innerStyle: any, items: React.ReactNode[]): React.ReactElement<any>,
 }
 
 export interface State {
@@ -101,6 +112,7 @@ export default class VirtualList extends React.PureComponent<Props, State> {
     overscanCount: 3,
     scrollDirection: DIRECTION.VERTICAL,
     width: '100%',
+    renderWrapper: defaultRenderWrapper,
   };
 
   static propTypes = {
@@ -117,6 +129,7 @@ export default class VirtualList extends React.PureComponent<Props, State> {
     onItemsRendered: PropTypes.func,
     overscanCount: PropTypes.number,
     renderItem: PropTypes.func.isRequired,
+    renderWrapper: PropTypes.func,
     scrollOffset: PropTypes.number,
     scrollToIndex: PropTypes.number,
     scrollToAlignment: PropTypes.oneOf([
@@ -278,6 +291,7 @@ export default class VirtualList extends React.PureComponent<Props, State> {
       height,
       overscanCount = 3,
       renderItem,
+      renderWrapper = defaultRenderWrapper,
       itemCount,
       itemSize,
       onItemsRendered,
@@ -341,11 +355,18 @@ export default class VirtualList extends React.PureComponent<Props, State> {
       }
     }
 
-    return (
-      <div ref={this.getRef} {...props} style={wrapperStyle}>
-        <div style={innerStyle}>{items}</div>
-      </div>
-    );
+    return renderWrapper(
+      { ...props, style: wrapperStyle },
+      this.getRef,
+      innerStyle,
+      items,
+    )
+
+    // return (
+    //   <div ref={this.getRef} {...props} style={wrapperStyle}>
+    //     <div style={innerStyle}>{items}</div>
+    //   </div>
+    // );
   }
 
   private getRef = (node: HTMLDivElement): void => {
